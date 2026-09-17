@@ -3,8 +3,15 @@ APP_HOME ?= $(PREFIX)/share/backupbar
 BIN_DIR ?= $(PREFIX)/bin
 CONFIG_PATH ?= $(HOME)/.config/backupbar/config.json
 SOLVERFORGE_PATH ?= $(HOME)/.local/share/solverforge
-RUBY ?= /usr/bin/ruby
+RUBY ?= $(shell command -v ruby 2>/dev/null || printf '%s' /usr/bin/ruby)
 QMLLINT ?= $(shell command -v qmllint 2>/dev/null || printf '%s' /usr/bin/qmllint)
+QMLLINT_SUPPORTS_LEVELS := $(shell "$(QMLLINT)" --help 2>&1 | grep -q -- '--type <level>' && printf '%s' yes)
+
+ifeq ($(QMLLINT_SUPPORTS_LEVELS),yes)
+QMLLINT_DEFAULT_DIAGNOSTIC_ARGS := --import info --type info --property info --signal info --unqualified info
+endif
+
+QMLLINT_DIAGNOSTIC_ARGS ?= $(QMLLINT_DEFAULT_DIAGNOSTIC_ARGS)
 
 .PHONY: help syntax test smoke qml-lint check install configure-user install-solverforge-linux-integration release-check
 
@@ -32,7 +39,7 @@ smoke:
 	@"$(RUBY)" test/smoke.rb
 
 qml-lint:
-	@"$(QMLLINT)" frontend/quickshell/shell.qml
+	@"$(QMLLINT)" $(QMLLINT_DIAGNOSTIC_ARGS) frontend/quickshell/shell.qml
 
 check: syntax test smoke qml-lint
 
