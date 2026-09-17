@@ -4,7 +4,7 @@ BIN_DIR ?= $(PREFIX)/bin
 CONFIG_PATH ?= $(HOME)/.config/backupbar/config.json
 SOLVERFORGE_PATH ?= $(HOME)/.local/share/solverforge
 RUBY ?= /usr/bin/ruby
-QMLLINT ?= /usr/bin/qmllint
+QMLLINT ?= $(shell command -v qmllint 2>/dev/null || printf '%s' /usr/bin/qmllint)
 
 .PHONY: help syntax test smoke qml-lint check install configure-user install-solverforge-linux-integration release-check
 
