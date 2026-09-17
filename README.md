@@ -1,7 +1,5 @@
 # BackupBar
 
-[![Forgejo CI](http://vigilance:3002/blackopsrepl/backupbar-sway/actions/workflows/ci.yml/badge.svg)](http://vigilance:3002/blackopsrepl/backupbar-sway/actions)
-
 BackupBar is a Linux status surface for backup infrastructure that already exists. It combines bounded, read-only Ruby observation with a terse Waybar chip and a centered QuickShell panel.
 
 It is deliberately no-touch. BackupBar does not start or stop backups, prune repositories, unlock or repair them, remove locks, rotate credentials, or add another scheduler.
