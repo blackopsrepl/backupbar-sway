@@ -31,6 +31,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends jq qt6-declarative-dev-tools
+          if ! command -v qmllint >/dev/null 2>&1; then
+            qml_lint_path="$(find /usr -type f -name qmllint -print -quit)"
+            test -n "$qml_lint_path"
+            sudo ln -s "$qml_lint_path" /usr/local/bin/qmllint
+          fi
 
       - name: Install release tooling
         run: npm ci --ignore-scripts
