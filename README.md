@@ -6,6 +6,8 @@ BackupBar is a Linux status surface for backup infrastructure that already exist
 
 It is deliberately no-touch. BackupBar does not start or stop backups, prune repositories, unlock or repair them, remove locks, rotate credentials, or add another scheduler.
 
+![BackupBar panel with the pressure map](docs/assets/backupbar-panel.png)
+
 ## Opinionated Integration
 
 BackupBar is usable as a standalone observer, but its richest integration is intentionally specific to the author's Linux backup stack. It expects conventions from these public GitHub projects:
