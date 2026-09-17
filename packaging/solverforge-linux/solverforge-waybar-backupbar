@@ -1,0 +1,27 @@
+#!/bin/bash
+
+config_path="${BACKUPBAR_CONFIG:-$HOME/.config/backupbar/config.json}"
+backupbar_cmd="${BACKUPBAR_BIN:-$HOME/.local/bin/backupbar}"
+
+if [[ ! -x "$backupbar_cmd" ]] && command -v backupbar &>/dev/null; then
+    backupbar_cmd="$(command -v backupbar)"
+fi
+
+if [[ ! -x "$backupbar_cmd" ]]; then
+    exit 0
+fi
+
+case "${1:-render}" in
+    render)
+        exec "$backupbar_cmd" waybar render --config "$config_path"
+        ;;
+    panel|details|open)
+        exec "$backupbar_cmd" waybar panel --config "$config_path"
+        ;;
+    refresh)
+        exec "$backupbar_cmd" refresh --config "$config_path"
+        ;;
+    *)
+        exec "$backupbar_cmd" waybar render --config "$config_path"
+        ;;
+esac

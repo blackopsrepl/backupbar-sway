@@ -1,0 +1,23 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: check-merge-conflict
+    -   id: check-added-large-files
+
+-   repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+    -   id: gitleaks
+
+-   repo: local
+    hooks:
+    -   id: backupbar-check
+        name: BackupBar check
+        entry: make check
+        language: system
+        pass_filenames: false
+        always_run: true
