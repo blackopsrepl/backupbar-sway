@@ -53,7 +53,7 @@ module BackupBar
         timer = systemd_show("borg-timemachine.timer")
         config = parse_borg_config(@config.dig(:source, :borgConfig))
         last_at = parse_systemd_time(service["ExecMainExitTimestamp"])
-        running = service["ActiveState"] == "active"
+        running = service_running?(service)
         last_success = service["Result"] == "success" && service["ExecMainStatus"].to_i.zero?
         timer_active = timer["ActiveState"] == "active"
         status = if running
@@ -404,6 +404,14 @@ module BackupBar
 
       def run(command, args, timeout: @timeout)
         @runner.run_command(command, args, timeout: timeout)
+      end
+
+      def service_running?(service)
+        state = service["ActiveState"].to_s
+        return true if state == "activating"
+        return true if state == "active" && service["SubState"].to_s != "exited"
+
+        false
       end
 
       def parse_systemd_time(value)

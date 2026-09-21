@@ -27,6 +27,12 @@ class FakeRunner
 
   def initialize
     @calls = []
+    @systemd_units = {}
+  end
+
+  def stub_systemd(unit, output)
+    @systemd_units[unit] = output
+    self
   end
 
   def run_command(command, args = [], timeout: 10, env: {})
@@ -34,11 +40,11 @@ class FakeRunner
     stdout = case command
              when "systemctl"
                unit = args[1].to_s
-               if unit.end_with?(".timer")
-                 "ActiveState=active\nSubState=waiting\nResult=success\nLastTriggerUSec=Thu 2026-09-17 12:00:00 UTC\nNextElapseUSecRealtime=Thu 2026-09-18 12:00:00 UTC\n"
-               else
-                 "ActiveState=inactive\nSubState=dead\nResult=success\nExecMainStatus=0\nExecMainExitTimestamp=Thu 2026-09-17 12:01:00 UTC\n"
-               end
+               @systemd_units[unit] || if unit.end_with?(".timer")
+                                         "ActiveState=active\nSubState=waiting\nResult=success\nLastTriggerUSec=Thu 2026-09-17 12:00:00 UTC\nNextElapseUSecRealtime=Thu 2026-09-18 12:00:00 UTC\n"
+                                       else
+                                         "ActiveState=inactive\nSubState=dead\nResult=success\nExecMainStatus=0\nExecMainExitTimestamp=Thu 2026-09-17 12:01:00 UTC\n"
+                                       end
              when "restic"
                if args.include?("--tag")
                  JSON.generate([

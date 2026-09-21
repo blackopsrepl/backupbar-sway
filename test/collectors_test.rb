@@ -38,4 +38,24 @@ class CollectorsTest < Minitest::Test
       assert raw[:storage].any?
     end
   end
+
+  def test_reports_in_progress_oneshot_borg_backup_as_active
+    Dir.mktmpdir do |root|
+      borg_config = File.join(root, "borg-config.yaml")
+      File.write(borg_config, "repository:\n  path: /var/lib/backup-repository\n")
+      config = temp_config(root)
+      config[:source][:borgConfig] = borg_config
+      runner = FakeRunner.new
+      runner.stub_systemd(
+        "borg-timemachine.service",
+        "ActiveState=activating\nSubState=start\nResult=success\nExecMainStatus=0\nExecMainExitTimestamp=\n"
+      )
+
+      raw = BackupBar::Core::Collectors.new(config, runner: runner).collect(now: Time.parse("2026-09-17T16:00:00Z"))
+      borg = raw[:systems].find { |system| system[:id] == "borg" }
+
+      assert_equal "active", borg[:status]
+      assert_equal "Backup cycle in progress", borg[:detail]
+    end
+  end
 end
