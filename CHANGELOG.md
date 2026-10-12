@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.1.1...v0.2.0) (2026-10-12)
+
+### Features
+
+* **panel:** mac-bar modal, family look, tone-dot badges ([c0ee3e5](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/c0ee3e5d3422b2f74d9207e12c642ae1c62e5608))
+
 ## 0.1.1 (2026-09-21)
 
 ### Features
