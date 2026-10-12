@@ -16,7 +16,12 @@ class QmlContractTest < Minitest::Test
     assert_includes qml, "font.family: root.iconFont"
     assert_includes qml, "property string refreshIcon"
     assert_includes qml, "property string closeIcon"
-    refute_match(/radius:\s*[1-9]/, qml)
+    # Family look: rounded frames, tone-dot badges. Pins the mac-bar modal
+    # contract (no scrim, no focus grab, card-bound input mask) too.
+    assert_match(/radius:\s*[1-9]/, qml)
+    assert_includes qml, "WlrKeyboardFocus.OnDemand"
+    assert_includes qml, "mask: Region { item: card"
+    refute_includes qml, "focusable: true"
     refute_includes qml, "solverforge-backup"
   end
 end

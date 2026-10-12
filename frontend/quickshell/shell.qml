@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 
 ShellRoot {
     id: root
@@ -180,24 +181,34 @@ ShellRoot {
         root.reloadState()
     }
 
+    // Streamlined badge: tone carried by a left dot, not a filled pill —
+    // same glanceable status, less width.
     component StatusBadge: Rectangle {
         property string status: "unknown"
         property color accent: root.statusColor(status)
-        implicitWidth: badgeText.implicitWidth + 20
-        implicitHeight: 24
-        color: Qt.rgba(accent.r, accent.g, accent.b, 0.12)
-        border.color: accent
-        border.width: 1
-         radius: 0
+        implicitWidth: badgeDot.implicitWidth + 4 + badgeText.implicitWidth + 8
+        implicitHeight: 14
+        color: "transparent"
+
+        Text {
+            id: badgeDot
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            text: "●"
+            color: parent.accent
+            font.family: root.textFont
+            font.pixelSize: 7
+        }
 
         Text {
             id: badgeText
-            anchors.centerIn: parent
-            text: parent.status.toUpperCase()
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: badgeDot.right
+            anchors.leftMargin: 4
+            text: parent.status
             color: parent.accent
             font.family: root.textFont
-            font.pixelSize: 9
-            font.bold: true
+            font.pixelSize: 8
         }
     }
 
@@ -211,7 +222,7 @@ ShellRoot {
         color: buttonArea.containsMouse ? Qt.rgba(accent.r, accent.g, accent.b, 0.16) : "#121827"
         border.color: buttonArea.containsMouse ? accent : "#2B3550"
         border.width: 1
-         radius: 0
+         radius: 3
 
         RowLayout {
             anchors.centerIn: parent
@@ -249,7 +260,7 @@ ShellRoot {
         color: "#101522"
         border.color: "#253057"
         border.width: 1
-         radius: 0
+         radius: 3
 
         ColumnLayout {
             anchors.fill: parent
@@ -294,14 +305,14 @@ ShellRoot {
         color: "#111725"
         border.color: "#253057"
         border.width: 1
-         radius: 0
+         radius: 3
 
         Rectangle {
             width: 5
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             color: root.statusColor(system.status)
-             radius: 0
+             radius: 3
         }
 
         ColumnLayout {
@@ -378,14 +389,14 @@ ShellRoot {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 5
                 color: "#090C14"
-                 radius: 0
+                 radius: 3
                 border.color: "#242D44"
                 border.width: 1
                 Rectangle {
                     width: system.ageSeconds === null || system.ageSeconds === undefined ? 0 : Math.max(4, Math.min(parent.width, parent.width * (1 - Math.min(1, Number(system.ageSeconds) / 172800))))
                     height: parent.height
                     color: root.statusColor(system.status)
-                     radius: 0
+                     radius: 3
                 }
             }
         }
@@ -400,7 +411,7 @@ ShellRoot {
         color: "#101522"
         border.color: "#253057"
         border.width: 1
-         radius: 0
+         radius: 3
 
         ColumnLayout {
             anchors.fill: parent
@@ -428,12 +439,12 @@ ShellRoot {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 4
                 color: "#080B12"
-                 radius: 0
+                 radius: 3
                 Rectangle {
                     width: parent.width * root.storageWidth(mount) / 100
                     height: parent.height
                     color: root.statusColor(mount.status)
-                     radius: 0
+                     radius: 3
                 }
             }
         }
@@ -446,7 +457,10 @@ ShellRoot {
         implicitWidth: screen ? screen.width : 1200
         implicitHeight: screen ? screen.height : 820
         color: "transparent"
-        focusable: true
+        // Mac-bar behavior: no focus grab, no backdrop. The input mask is
+        // bound to the card, so clicks outside it reach the desktop.
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        mask: Region { item: card; intersection: Intersection.Intersect }
         aboveWindows: true
         exclusionMode: ExclusionMode.Ignore
         anchors { top: true; bottom: true; left: true; right: true }
@@ -460,15 +474,6 @@ ShellRoot {
 
         Item {
             anchors.fill: parent
-            Rectangle {
-                anchors.fill: parent
-                color: "#050711"
-                opacity: 0.78
-            }
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.closeModal()
-            }
 
             Rectangle {
                 id: card
@@ -478,7 +483,7 @@ ShellRoot {
                 color: "#0A0D16"
                 border.color: root.statusColor(root.effectiveStatus)
                 border.width: 1
-                 radius: 0
+                radius: 4
 
                 MouseArea {
                     anchors.fill: parent
@@ -488,7 +493,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 1
-                     radius: 0
+                    radius: 3
                     color: "transparent"
                     border.color: "#27304A"
                     border.width: 1
@@ -518,7 +523,7 @@ ShellRoot {
                             color: "#0E1422"
                             border.color: "#82FB9C"
                             border.width: 1
-                             radius: 0
+                             radius: 3
 
                             Canvas {
                                 id: orbitCanvas
@@ -708,7 +713,7 @@ ShellRoot {
                             color: "#101522"
                             border.color: "#253057"
                             border.width: 1
-                             radius: 0
+                             radius: 3
                             ColumnLayout {
                                 anchors.fill: parent
                                 anchors.margins: 8
