@@ -12,5 +12,5 @@ require_relative "backupbar/runtime/waybar"
 require_relative "backupbar/cli"
 
 module BackupBar
-  VERSION = "0.3.0"
+  VERSION = "0.4.0"
 end

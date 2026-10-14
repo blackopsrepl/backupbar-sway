@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.3.0...v0.4.0) (2026-10-14)
+
+
+### Features
+
+* **panel:** bounded bar drop-down surface instead of a screen modal ([a78e89d](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/a78e89d785d1716da77820c504224391dcb00955))
+
+
+### Bug Fixes
+
+* **panel:** anchor the dismissal catcher to the window item ([fb3fbce](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/fb3fbce1c457dae068ea813502ea203194e25c01))
+
 ## [0.3.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.2.0...v0.3.0) (2026-10-14)
 
 
