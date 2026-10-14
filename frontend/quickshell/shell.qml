@@ -19,6 +19,11 @@ ShellRoot {
     property string unknownIcon: "󰘥"
     property string refreshIcon: "󰑐"
     property string closeIcon: "󰅖"
+    // Breakpoint pattern shared with the Switchyard panel: fixed margins and
+    // font sizes below wide/narrow thresholds, mirroring Switchyard's
+    // narrowLayout/shortViewport pair, in BackupBar's vocabulary.
+    property bool narrowWidth: modal.width < 1000
+    property bool shortViewport: modal.height < 700
     property real nowMilliseconds: Date.now()
     property var viewData: snapshotAdapter.view && snapshotAdapter.view.summary ? snapshotAdapter.view : ({ summary: {}, systems: [], storage: [], timeline: [] })
     property var summary: viewData.summary || ({})
@@ -26,6 +31,11 @@ ShellRoot {
     property var storage: viewData.storage || []
     property var timeline: viewData.timeline || []
     property var source: viewData.source || ({})
+
+    // The presenter owns every derived fact; source classification stays out of
+    // the QML. view.context carries the earliest upcoming scheduled run.
+    property var context: viewData.context || ({})
+
     property string effectiveStatus: snapshotExpired ? "stale" : (snapshotAdapter.status || "loading")
     property bool snapshotExpired: {
         if (!snapshotAdapter.generatedAt) {
@@ -84,18 +94,30 @@ ShellRoot {
         return isNaN(percent) ? 0 : Math.max(0, Math.min(100, percent))
     }
 
+    // Detail band under the job label. Each fact is presenter-projected; the
+    // lines stay short and elide rather than pushing the card wider.
     function systemDetail(system) {
         if (!system) {
             return ""
         }
+        var lines = []
+        if (system.repoUsageText) {
+            lines.push("repo " + system.repoUsageText)
+        }
         var metrics = system.metrics || ({})
         if (metrics.snapshotCount !== undefined) {
-            return metrics.snapshotCount + " snapshots"
+            lines.push(metrics.snapshotCount + (system.overdue ? " snapshots (overdue)" : " snapshots"))
+        } else if (metrics.allArchives) {
+            lines.push(metrics.allArchives.replace("All archives:", "archives"))
+        } else if (metrics.jobs) {
+            lines.push(metrics.jobs.length + (metrics.jobs.length === 1 ? " timer" : " timers") + (system.overdue ? " (overdue)" : ""))
+        } else {
+            lines.push(system.detail || system.coverage || "no detail")
         }
-        if (metrics.allArchives) {
-            return metrics.allArchives.replace("All archives:", "archives:")
+        if (system.nextAtText) {
+            lines.push("next " + system.nextAtText)
         }
-        return system.detail || system.coverage || "no detail"
+        return lines.join("  ·  ")
     }
 
     function reloadState() {
@@ -284,6 +306,7 @@ ShellRoot {
                     font.family: root.textFont
                     font.pixelSize: 22
                     font.bold: true
+                    elide: Text.ElideRight
                 }
                 Text {
                     Layout.fillWidth: true
@@ -507,11 +530,12 @@ ShellRoot {
                     contentHeight: panelContent.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                     ColumnLayout {
                         id: panelContent
                         width: panelScroll.width
-                        spacing: 12
+                        spacing: root.shortViewport ? 10 : 12
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -568,21 +592,57 @@ ShellRoot {
                                 text: "BACKUPBAR"
                                 color: "#DDF7FF"
                                 font.family: root.textFont
-                                font.pixelSize: 24
+                                font.pixelSize: root.shortViewport ? 22 : 24
                                 font.bold: true
                                 elide: Text.ElideRight
                             }
+                            // Like-for-like headline: the chip's job basis with
+                            // an explicit overdue count next to it. Presenter-
+                            // derived; the panel only renders it.
                             Text {
                                 Layout.fillWidth: true
-                                text: "live backup telemetry  /  no-touch observer"
+                                visible: !root.shortViewport
+                                text: summary.headlineText || "--"
                                 color: "#9CF7C2"
                                 font.family: root.textFont
                                 font.pixelSize: 10
                                 elide: Text.ElideRight
                             }
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.context.nextRunText ? ("next scheduled run  " + root.context.nextRunText + (root.context.nextRunLabel ? "  ·  " + root.context.nextRunLabel : "")) : "next scheduled run unavailable"
+                                color: root.context.nextRunText ? "#85E1FB" : "#6A6E95"
+                                font.family: root.textFont
+                                font.pixelSize: 9
+                                elide: Text.ElideRight
+                            }
                         }
 
-                        StatusBadge { status: root.effectiveStatus }
+                        // Count chip: N backup jobs on the same basis the
+                        // presenter's headline uses. Stays on narrow screens;
+                        // it is the compact replacement for the headline line.
+                        Rectangle {
+                            visible: root.systems.length > 0
+                            implicitWidth: jobsChipText.implicitWidth + 8
+                            implicitHeight: 18
+                            color: "#121827"
+                            border.color: "#2B3550"
+                            border.width: 1
+                             radius: 3
+                            Text {
+                                id: jobsChipText
+                                anchors.centerIn: parent
+                                text: (root.systems.length) + " jobs"
+                                color: "#9AA4BE"
+                                font.family: root.textFont
+                                font.pixelSize: 9
+                            }
+                        }
+
+                        StatusBadge {
+                            status: root.effectiveStatus
+                            visible: !root.narrowWidth
+                        }
                         ActionButton {
                             icon: root.refreshIcon
                             label: "Refresh"
@@ -599,12 +659,22 @@ ShellRoot {
                     GridLayout {
                         Layout.fillWidth: true
                         columns: panelScroll.width >= 760 ? 4 : (panelScroll.width >= 460 ? 2 : 1)
-                        rowSpacing: 8
+                        rowSpacing: root.shortViewport ? 6 : 8
                         columnSpacing: 8
+
                         MetricTile {
-                            label: "systems healthy"
-                            value: String(summary.healthyCount || 0)
-                            detail: (summary.systemCount || 0) + " observed"
+                            label: "jobs"
+                            // Like-for-like: the same backup-job basis the chip
+                            // uses, with the overdue count alongside it.
+                            value: summary.headlineText || "0 jobs / 0 overdue"
+                            detail: "watched jobs"
+                            accent: (summary.overdueCount || 0) > 0 || (summary.criticalCount || 0) > 0 ? "#F2C572" : "#82FB9C"
+                        }
+                        MetricTile {
+                            label: "next run"
+                            value: root.context.nextRunText || "--"
+                            detail: root.context.nextRunLabel || "no schedule observed"
+                            accent: "#85E1FB"
                         }
                         MetricTile {
                             label: "latest good"
@@ -615,7 +685,7 @@ ShellRoot {
                         MetricTile {
                             label: "attention"
                             value: String(summary.attentionCount || 0)
-                            detail: (summary.criticalCount || 0) + " critical"
+                            detail: (summary.criticalCount || 0) + (summary.criticalCount === 1 ? " critical" : " critical") + " / " + (summary.overdueCount || 0) + (summary.overdueCount === 1 ? " overdue" : " overdue")
                             accent: (summary.attentionCount || 0) > 0 ? "#F2C572" : "#82FB9C"
                         }
                         MetricTile {
@@ -629,21 +699,66 @@ ShellRoot {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 7
-                        Text {
-                            text: "BACKUP CONSTELLATION"
-                            color: "#6A6E95"
-                            font.family: root.textFont
-                            font.pixelSize: 9
-                            font.bold: true
-                        }
-                        GridLayout {
+                        RowLayout {
                             Layout.fillWidth: true
-                            columns: panelScroll.width >= 860 ? 3 : (panelScroll.width >= 560 ? 2 : 1)
-                            rowSpacing: 8
-                            columnSpacing: 8
-                            Repeater {
-                                model: root.systems
-                                delegate: BackupCard {}
+                            spacing: 8
+                            Text {
+                                text: "BACKUP CONSTELLATION"
+                                color: "#6A6E95"
+                                font.family: root.textFont
+                                font.pixelSize: 9
+                                font.bold: true
+                            }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: "#242D44" }
+                            Text {
+                                text: (root.systems.length) + " jobs"
+                                color: "#6A6E95"
+                                font.family: root.textFont
+                                font.pixelSize: 8
+                            }
+                            Text {
+                                // Visible overflow cue: bound directly to the
+                                // list viewport so it tracks late model changes.
+                                visible: jobsScroll.contentHeight > jobsScroll.height
+                                text: "· scroll"
+                                color: "#6A6E95"
+                                font.family: root.textFont
+                                font.pixelSize: 8
+                            }
+                        }
+
+                        Flickable {
+                            id: jobsScroll
+
+                            Layout.fillWidth: true
+                            // Three cards at full height, then scroll; shrinks
+                            // near the floor so the pressure map stays visible.
+                            Layout.preferredHeight: root.shortViewport ? 420 : 492
+                            contentWidth: width
+                            contentHeight: jobsGrid.implicitHeight
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                            GridLayout {
+                                id: jobsGrid
+                                width: jobsScroll.width
+                                columns: jobsScroll.width >= 860 ? 3 : (jobsScroll.width >= 560 ? 2 : 1)
+                                columnSpacing: 8
+                                rowSpacing: 8
+                                Repeater {
+                                    model: root.systems
+                                    delegate: BackupCard {}
+                                }
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: root.systems.length === 0
+                                text: "No backup jobs observed yet."
+                                color: "#6A6E95"
+                                font.family: root.textFont
+                                font.pixelSize: 10
                             }
                         }
                     }
@@ -662,7 +777,8 @@ ShellRoot {
                             }
                             Rectangle { Layout.fillWidth: true; height: 1; color: "#242D44" }
                             Text {
-                                text: (summary.storageWarningCount || 0) + " mounts over threshold"
+                                Layout.maximumWidth: jobsScroll.width / 2
+                                text: (summary.storageWarningCount || 0) + (summary.storageWarningCount === 1 ? " mount over threshold" : " mounts over threshold")
                                 color: (summary.storageWarningCount || 0) > 0 ? "#F2C572" : "#6A6E95"
                                 font.family: root.textFont
                                 font.pixelSize: 8
@@ -701,11 +817,12 @@ ShellRoot {
 
                     ListView {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 82
+                        Layout.preferredHeight: root.shortViewport ? 64 : 82
                         model: root.timeline
                         orientation: ListView.Horizontal
                         spacing: 8
                         clip: true
+                        ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
                         delegate: Rectangle {
                             required property var modelData
                             width: 190
