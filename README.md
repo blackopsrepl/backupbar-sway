@@ -30,6 +30,8 @@ Restic itself remains the standard upstream tool; BackupBar reads its repository
 
 The presenter produces view-ready state. Waybar and QuickShell read the cached snapshot; they never call Borg, Restic, systemd, journalctl, or `df` directly. Secrets and passphrase contents never enter runtime JSON, logs, tooltips, or QML.
 
+The panel surfaces what already exists: per-job backup age, next scheduled run, repository usage, and overdue state, plus a like-for-like systems/overdue headline. It adds no controls beyond the read-only Refresh — BackupBar never starts, stops, prunes, unlocks, or repairs anything.
+
 ## Requirements
 
 - Linux with Ruby 3.1 or newer.

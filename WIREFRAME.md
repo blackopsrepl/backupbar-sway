@@ -31,7 +31,7 @@ The chip is cached. A middle click requests a new observation cycle; a left clic
  +---------------------------------------------------------------------+
 ```
 
-Cards expose status, freshness, schedule, target, retention, coverage, and source detail. The constellation graphic is decorative telemetry: it does not imply a second backup mechanism.
+Cards expose status, freshness (last successful run), next scheduled run, repository usage, retention, coverage, and source detail. The metric row carries the like-for-like headline (`N systems / M overdue`, the chip's own basis), the next run, latest good, attention detail, and storage peak. The constellation sits in a bounded list with a `scroll` overflow cue; the whole panel scrolls when the viewport is shorter than the content. The constellation graphic is decorative telemetry: it does not imply a second backup mechanism.
 
 ## Status Contract
 
