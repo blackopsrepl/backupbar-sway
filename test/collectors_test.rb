@@ -39,6 +39,22 @@ class CollectorsTest < Minitest::Test
     end
   end
 
+  def test_borg_collector_exposes_deduplicated_repo_usage
+    Dir.mktmpdir do |root|
+      config = temp_config(root)
+      runner = FakeRunner.new
+
+      raw = BackupBar::Core::Collectors.new(config, runner: runner).collect(now: Time.parse("2026-09-17T16:00:00Z"))
+      borg = raw[:systems].find { |system| system[:id] == "borg" }
+      restic = raw[:systems].find { |system| system[:id] == "restic" }
+
+      # The deduplicated column of Borg's own "All archives" report is the
+      # repository footprint; the collector only reformats what the tool said.
+      assert_equal "141.57 GB", borg[:metrics][:repoUsageText]
+      refute restic[:metrics].key?(:repoUsageText)
+    end
+  end
+
   def test_reports_in_progress_oneshot_borg_backup_as_active
     Dir.mktmpdir do |root|
       borg_config = File.join(root, "borg-config.yaml")

@@ -528,7 +528,20 @@ module BackupBar
         return { status: "unavailable", error: Format.clean_text(result.stderr) } unless result.success?
 
         line = result.stdout.lines.find { |entry| entry.include?("All archives:") }
-        { status: "ok", allArchives: line&.strip }
+        {
+          status: "ok",
+          allArchives: line&.strip,
+          # Usage as the tool reports it: the deduplicated column of the
+          # "All archives" row. The collector reformats only; it never queries.
+          repoUsageText: parse_all_archives_usage(line)
+        }
+      end
+
+      def parse_all_archives_usage(line)
+        cells = line.to_s.split
+        return nil if cells.length < 3
+
+        "#{cells[-2]} #{cells[-1]}"
       end
 
       def snapshot_directory_summary
