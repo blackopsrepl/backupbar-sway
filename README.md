@@ -1,6 +1,6 @@
 # BackupBar
 
-BackupBar is a Linux status surface for backup infrastructure that already exists. It combines bounded, read-only Ruby observation with a terse Waybar chip and a centered QuickShell panel.
+BackupBar is a Linux status surface for backup infrastructure that already exists. It combines bounded, read-only Ruby observation with a terse Waybar chip and a QuickShell bar drop-down panel.
 
 It is deliberately no-touch. BackupBar does not start or stop backups, prune repositories, unlock or repair them, remove locks, rotate credentials, or add another scheduler.
 
@@ -31,6 +31,8 @@ Restic itself remains the standard upstream tool; BackupBar reads its repository
 The presenter produces view-ready state. Waybar and QuickShell read the cached snapshot; they never call Borg, Restic, systemd, journalctl, or `df` directly. Secrets and passphrase contents never enter runtime JSON, logs, tooltips, or QML.
 
 The panel surfaces what already exists: per-job backup age, next scheduled run, repository usage, and overdue state, plus a like-for-like systems/overdue headline. It adds no controls beyond the read-only Refresh — BackupBar never starts, stops, prunes, unlocks, or repairs anything.
+
+The panel is a bounded bar drop-down: it hangs from the top bar edge on the chip's side, covers only the card's rect (never a full-screen surface), and leaves the desktop interactive — no scrim, no backdrop. Dismiss it with Esc (after clicking the panel), the Close button, or a click inside the panel's gutter strip.
 
 ## Requirements
 
