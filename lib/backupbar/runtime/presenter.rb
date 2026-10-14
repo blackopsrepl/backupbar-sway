@@ -117,12 +117,13 @@ module BackupBar
         summary
       end
 
-      # One like-for-like headline: the same number-of-jobs basis the chip uses,
-      # with an explicit overdue count next to it in the same plural style.
+      # One like-for-like headline: the same all-systems basis the chip uses
+      # (N/M healthy), with an explicit overdue count next to it in the same
+      # single/plural style.
       def headline_text(summary)
-        jobs = summary[:backupCount].to_i
+        systems = summary[:systemCount].to_i
         overdue = summary[:overdueCount].to_i
-        "#{jobs} #{jobs == 1 ? "job" : "jobs"} / #{overdue} overdue"
+        "#{systems} #{systems == 1 ? "system" : "systems"} / #{overdue} overdue"
       end
 
       def context_view(systems, now)

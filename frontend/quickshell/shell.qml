@@ -618,7 +618,7 @@ ShellRoot {
                             }
                         }
 
-                        // Count chip: N backup jobs on the same basis the
+                        // Count chip: N observed systems on the same basis the
                         // presenter's headline uses. Stays on narrow screens;
                         // it is the compact replacement for the headline line.
                         Rectangle {
@@ -632,7 +632,7 @@ ShellRoot {
                             Text {
                                 id: jobsChipText
                                 anchors.centerIn: parent
-                                text: (root.systems.length) + " jobs"
+                                text: (root.systems.length) + " observed"
                                 color: "#9AA4BE"
                                 font.family: root.textFont
                                 font.pixelSize: 9
@@ -663,11 +663,12 @@ ShellRoot {
                         columnSpacing: 8
 
                         MetricTile {
-                            label: "jobs"
-                            // Like-for-like: the same backup-job basis the chip
-                            // uses, with the overdue count alongside it.
-                            value: summary.headlineText || "0 jobs / 0 overdue"
-                            detail: "watched jobs"
+                            label: "systems"
+                            // Like-for-like: the same total-systems basis the
+                            // chip uses (N/M healthy), with the overdue count
+                            // alongside it in matching style.
+                            value: summary.headlineText || "0 systems / 0 overdue"
+                            detail: (summary.healthyCount || 0) + " healthy"
                             accent: (summary.overdueCount || 0) > 0 || (summary.criticalCount || 0) > 0 ? "#F2C572" : "#82FB9C"
                         }
                         MetricTile {
@@ -711,7 +712,7 @@ ShellRoot {
                             }
                             Rectangle { Layout.fillWidth: true; height: 1; color: "#242D44" }
                             Text {
-                                text: (root.systems.length) + " jobs"
+                                text: (root.systems.length) + " observed"
                                 color: "#6A6E95"
                                 font.family: root.textFont
                                 font.pixelSize: 8

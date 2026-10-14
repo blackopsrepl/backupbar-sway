@@ -57,7 +57,7 @@ class QmlContractTest < Minitest::Test
     # as-needed scrollbar (Switchyard's breakpoint pattern, BackupBar wording).
     assert_match(/property bool narrowWidth/, qml)
     assert_match(/property bool shortViewport/, qml)
-    assert_includes qml, 'text: (root.systems.length) + " jobs"'
+    assert_includes qml, 'text: (root.systems.length) + " observed"'
     assert_includes qml, '"· scroll"'
     assert_includes qml, 'visible: jobsScroll.contentHeight > jobsScroll.height'
     assert_includes qml, "· scroll"

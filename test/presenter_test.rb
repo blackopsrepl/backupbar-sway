@@ -73,12 +73,12 @@ class PresenterTest < Minitest::Test
 
     snapshot = BackupBar::Runtime::Presenter.apply(raw, config, now: now)
 
-    assert_equal "1 job / 0 overdue", snapshot.dig(:view, :summary, :headlineText)
+    assert_equal "1 system / 0 overdue", snapshot.dig(:view, :summary, :headlineText)
 
     raw[:systems] << { id: "restic", label: "Restic", kind: "backup", status: "warning", latestAt: "2026-09-15T15:50:00Z", latestText: "2d ago" }
     snapshot = BackupBar::Runtime::Presenter.apply(raw, config, now: now)
 
-    assert_equal "2 jobs / 1 overdue", snapshot.dig(:view, :summary, :headlineText)
+    assert_equal "2 systems / 1 overdue", snapshot.dig(:view, :summary, :headlineText)
   end
 
   def test_context_reports_the_earliest_upcoming_run
