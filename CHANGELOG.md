@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.5.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.4.0...v0.5.0) (2026-10-14)
+
+
+### Features
+
+* **panel:** square corners everywhere except pill/dot shapes ([f5af477](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/f5af47725a3b03846ef00aabb765115b5ac30a6b))
+* **panel:** the panel reads the family font scale ([4197265](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/41972656ae1884cc3ebe23e7264c07ca35f2b844))
+
 ## [0.4.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.3.0...v0.4.0) (2026-10-14)
 
 
