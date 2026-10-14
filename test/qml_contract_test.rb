@@ -62,6 +62,9 @@ class QmlContractTest < Minitest::Test
     assert_includes qml, 'visible: jobsScroll.contentHeight > jobsScroll.height'
     assert_includes qml, "· scroll"
     assert_includes qml, 'policy: ScrollBar.AsNeeded'
+    # Short viewports: the card height must always fit the modal (viewport-fit
+    # clamp like Switchyard's), scrolling inside instead of cropping the frame.
+    assert_includes qml, "height: Math.max(340, Math.min(820, modal.height - 30))"
     # Negative control, run after the positive assertions: the panel's complete
     # CLI command surface is audited line by line and must stay read-only, and
     # no click handler may invoke a mutation verb. (A disclaimer may name the

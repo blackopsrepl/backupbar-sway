@@ -501,7 +501,10 @@ ShellRoot {
             Rectangle {
                 id: card
                 width: Math.min(1120, Math.max(340, modal.width - 36))
-                height: Math.min(820, Math.max(620, modal.height - 30))
+                // Viewport-fit height: shrink below 820 when the screen is
+                // shorter (Switchyard's clamp) so the frame never crops; the
+                // bounded job list and the outer scroll absorb the difference.
+                height: Math.max(340, Math.min(820, modal.height - 30))
                 anchors.centerIn: parent
                 color: "#0A0D16"
                 border.color: root.statusColor(root.effectiveStatus)
