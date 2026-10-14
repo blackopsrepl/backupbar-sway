@@ -555,7 +555,7 @@ ShellRoot {
             // click inside the window but outside the card's radius dismisses.
             MouseArea {
                 id: stripCatcher
-                anchors.fill: panel
+                anchors.fill: panelItem
                 z: -1
                 onClicked: root.closeModal()
             }

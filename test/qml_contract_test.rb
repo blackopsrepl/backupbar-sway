@@ -143,7 +143,8 @@ class QmlContractTest < Minitest::Test
     # Dismissal inside the bounded strip: Esc, and any click inside the window
     # but outside the card radius. The transparent click-catcher fills the
     # window (the strip), not the screen.
-    assert_match(/id:\s*stripCatcher\s*\n\s*anchors\.fill:\s*panel\s*\n\s*z:\s*-1\s*\n\s*onClicked:\s*root\.closeModal/m, qml)
+    assert_match(/id:\s*stripCatcher\s*\n\s*anchors\.fill:\s*panelItem\s*\n\s*z:\s*-1\s*\n\s*onClicked:\s*root\.closeModal/m, qml,
+                 "the bounded window's strip catcher must be pinned")
     assert_match(/sequence:\s*"Esc"/, qml)
 
     # The card fills its frame with the counted margins; no inner centering
