@@ -5,6 +5,11 @@ require_relative "test_helper"
 class QmlContractTest < Minitest::Test
   QML_PATH = File.expand_path("../frontend/quickshell/shell.qml", __dir__)
 
+  # Memoized panel source: every method below reads the same file once.
+  def qml
+    @qml ||= File.read(QML_PATH)
+  end
+
   def read_only_commands(qml)
     # The panel's complete command surface: exactly two assignments, both
     # read-only. Anything concatenated into the args funnel or the close tail
@@ -175,6 +180,133 @@ class QmlContractTest < Minitest::Test
     # assert the match present (assert, not refute — this is the tripwire).
     assert_match(/anchors\s*\{[^}]*bottom:\s*true/m, regressed)
   end
+
+  # ----------------------------------------------------------------
+  # Family-wide visual uniformity: TokenMaxx square corners (radius 0
+  # everywhere except the 3.5 status dot and thin 1..2 stripes) at
+  # Switchyard's font scale (7 dot glyph, 9 meta, 10 body, 11 section
+  # labels, 12 summary values, 15 detail headers, 21 title).
+  # ----------------------------------------------------------------
+  def test_radius_is_zero_everywhere_except_dots_and_thin_stripes
+    radii = qml.scan(/radius:\s*([0-9.]+)/).flatten.map(&:to_f)
+    refute_empty radii, "the panel must still shape its dots and stripes"
+
+    allowed = lambda do |value|
+      value.zero? ||
+        value == 3.5 ||            # the live/status dot, a circle not a corner
+        (value >= 1 && value <= 2) # thin status stripes / heatcell-ish bars
+    end
+
+    bad = radii.reject { |value| allowed.call(value) }
+    assert_empty bad, "unexpected radii (family spec: 0, dots 3.5, stripes 1..2): #{bad.uniq}"
+
+    assert_equal [3.5], radii.select { |value| value == 3.5 }.uniq,
+                 "the only non-zero, non-stripe radius is the dot's 3.5"
+  end
+
+  # The component's own block: from the marker to its balanced closing brace,
+  # counted so nested children stay inside the segment and the next component
+  # stays outside it.
+  def component_block(marker)
+    after = qml.split(marker, 2).last.to_s
+    depth = 1
+    lines = []
+    after.each_line do |line|
+      stripped = line.lstrip
+      lines << line
+      if stripped.start_with?("}")
+        depth -= 1
+        break if depth.zero?
+      else
+        depth += 1 if stripped.end_with?("{")
+      end
+    end
+    lines.join
+  end
+
+
+  def test_frame_cards_buttons_and_tiles_drop_the_rounded_corner
+    frame = qml[/id: frameShadow.*?^\s*\}/m].to_s
+    card  = qml[/id: modalFrame.*?^\s*Flickable/m].to_s
+    buttons = component_block("component ActionButton: Rectangle")
+    tiles = component_block("component MetricTile: Rectangle")
+    [frame, card, buttons, tiles].each do |block|
+      assert_match(/radius: 0\b/, block, "frame/card/buttons/tiles must carry radius: 0")
+    end
+  end
+
+
+  def test_zero_radius_is_pinned_by_negative_and_positive_control
+    assert_match(/radius:\s*0\b/, qml, "square corners must actually appear in the source")
+    # The old rounded frame must be gone: the pre-unification radii must not
+    # survive as the panel's shaping (the dot's 3.5 and stripes 1..2 stay).
+    [3, 9, 10].each do |gone|
+      bad = qml.scan(/radius:\s*#{gone}\b(?![.\d])/).reject do
+        gone == 3 # the dot's 3.5 and the stripe family are the exemptions
+      end
+      assert_empty bad, "the pre-unification radius #{gone} must not survive"
+    end
+  end
+
+
+  def test_font_scale_is_the_family_scale
+    allowed = [7, 9, 10, 11, 12, 15, 21]
+    sizes = qml.scan(/font\.pixelSize:\s*([0-9]+)/).flatten.map(&:to_i)
+    bad = sizes.reject { |value| allowed.include?(value) }
+    assert_empty bad, "off-scale font sizes in panel text: #{bad.uniq}"
+
+    # Every tier must still be present so the hierarchy survives unified.
+    # (21 arrives through the title's 19 : 21 ternary and is pinned by its
+    # own dedicated test below, so the numeric scan skips it here.)
+    [9, 10, 11, 12].each do |size|
+      assert_includes sizes, size, "font scale #{size} must still appear"
+    end
+
+    # The single off-scale 7 is the status badge's tone-dot glyph (the
+    # "●" lead of the StatusBadge component's first Text), never a label.
+    dot_index = qml.index('text: "●"')
+    refute_nil dot_index, "the badge's tone-dot glyph must stay in the panel"
+    badge_text = qml[/component StatusBadge.*?text: "●".*?\}/m].to_s
+    assert_includes badge_text, "font.pixelSize: 7",
+                    "the off-scale 7 is reserved for the badge's dot glyph"
+    assert_operator qml.scan(/font\.pixelSize:\s*7\b/).length, :<=, 10,
+                    "7s are dot glyphs only and stay rare"
+  end
+
+
+  def test_title_reads_the_family_title_size
+    assert_match(/font\.pixelSize:\s*root\.shortViewport \? 19 : 21/, qml,
+                 "the title joins Switchyard's title scale (19 narrow / 21 wide)")
+    refute_match(/font\.pixelSize:\s*root\.shortViewport \? 22 : 24/, qml)
+  end
+
+
+  def test_headline_reads_the_family_summary_value_size
+    headline = qml[/summary\.headlineText \|\| "--".*?\}/m].to_s
+    assert_match(/font\.pixelSize:\s*12\b/, headline,
+                 "the like-for-like headline is a summary value at Switchyard's 12")
+  end
+
+
+  def test_documented_stale_font_pins_are_re_sourced
+    # Re-source every pin the family test carries: each value below must be
+    # found in the source it names, so a family spec drift fails here first.
+    pins = {
+      "/srv/lab/tools/switchyard/frontend/quickshell/shell.qml" => [
+        /radius:\s*0/,
+        /font\.pixelSize:\s*root\.shortViewport \? 19 : 21/,
+        /font\.pixelSize:\s*15/, # detail-view headers at Switchyard
+        /font\.pixelSize:\s*12/  # summary values at Switchyard
+      ]
+    }
+    pins.each do |source, patterns|
+      body = File.read(source)
+      patterns.each do |pattern|
+        assert_match(pattern, body, "family pin #{pattern} drifted in #{source}")
+      end
+    end
+  end
+
 
   # The header's live dot: green idle, amber while a refresh runs, red on a
   # presenter source error. Switchyard 8cda212 header convention, BackupBar

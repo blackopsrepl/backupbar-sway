@@ -274,7 +274,7 @@ ShellRoot {
             text: parent.status
             color: parent.accent
             font.family: root.textFont
-            font.pixelSize: 8
+            font.pixelSize: 9
         }
     }
 
@@ -337,7 +337,7 @@ ShellRoot {
                 text: parent.parent.label.toUpperCase()
                 color: "#6A6E95"
                 font.family: root.textFont
-                font.pixelSize: 9
+                font.pixelSize: 11
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -348,7 +348,7 @@ ShellRoot {
                     text: parent.parent.parent.value
                     color: parent.parent.parent.accent
                     font.family: root.textFont
-                    font.pixelSize: 22
+                    font.pixelSize: 12
                     font.bold: true
                     elide: Text.ElideRight
                 }
@@ -397,7 +397,7 @@ ShellRoot {
                     text: system.icon || root.unknownIcon
                     color: root.statusColor(system.status)
                     font.family: root.iconFont
-                    font.pixelSize: 16
+                    font.pixelSize: 15
                     font.bold: true
                 }
                 Text {
@@ -405,7 +405,7 @@ ShellRoot {
                     text: system.label || "backup system"
                     color: "#DDF7FF"
                     font.family: root.textFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     font.bold: true
                     elide: Text.ElideRight
                 }
@@ -668,7 +668,7 @@ ShellRoot {
                                     text: "BACKUPBAR"
                                     color: "#DDF7FF"
                                     font.family: root.textFont
-                                    font.pixelSize: root.shortViewport ? 22 : 24
+                                    font.pixelSize: root.shortViewport ? 19 : 21
                                     font.bold: true
                                     elide: Text.ElideRight
                                 }
@@ -694,7 +694,7 @@ ShellRoot {
                                 text: summary.headlineText || "--"
                                 color: "#9CF7C2"
                                 font.family: root.textFont
-                                font.pixelSize: 10
+                                font.pixelSize: 12
                                 elide: Text.ElideRight
                             }
                             Text {
@@ -799,7 +799,7 @@ ShellRoot {
                                 text: "BACKUP CONSTELLATION"
                                 color: "#6A6E95"
                                 font.family: root.textFont
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 font.bold: true
                             }
                             Rectangle { Layout.fillWidth: true; height: 1; color: "#242D44" }
@@ -807,7 +807,7 @@ ShellRoot {
                                 text: (root.systems.length) + " observed"
                                 color: "#6A6E95"
                                 font.family: root.textFont
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                             Text {
                                 // Visible overflow cue: bound directly to the
@@ -816,7 +816,7 @@ ShellRoot {
                                 text: "· scroll"
                                 color: "#6A6E95"
                                 font.family: root.textFont
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                         }
 
@@ -865,7 +865,7 @@ ShellRoot {
                                 text: "PRESSURE MAP"
                                 color: "#6A6E95"
                                 font.family: root.textFont
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 font.bold: true
                             }
                             Rectangle { Layout.fillWidth: true; height: 1; color: "#242D44" }
@@ -874,7 +874,7 @@ ShellRoot {
                                 text: (summary.storageWarningCount || 0) + (summary.storageWarningCount === 1 ? " mount over threshold" : " mounts over threshold")
                                 color: (summary.storageWarningCount || 0) > 0 ? "#F2C572" : "#6A6E95"
                                 font.family: root.textFont
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                         }
                         GridLayout {
@@ -896,7 +896,7 @@ ShellRoot {
                             text: "OBSERVATION STREAM"
                             color: "#6A6E95"
                             font.family: root.textFont
-                            font.pixelSize: 9
+                            font.pixelSize: 11
                             font.bold: true
                         }
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#242D44" }
@@ -943,7 +943,7 @@ ShellRoot {
                                         text: modelData.timeText || "--"
                                         color: root.statusColor(modelData.status)
                                         font.family: root.textFont
-                                        font.pixelSize: 8
+                                        font.pixelSize: 9
                                     }
                                 }
                                 Text {
@@ -951,7 +951,7 @@ ShellRoot {
                                     text: modelData.detail || "no detail"
                                     color: "#8D9BB8"
                                     font.family: root.textFont
-                                    font.pixelSize: 8
+                                    font.pixelSize: 9
                                     elide: Text.ElideRight
                                 }
                             }
@@ -971,7 +971,7 @@ ShellRoot {
                             text: "Refresh reads existing telemetry only. It does not start, stop, prune, unlock, or repair a backup."
                             color: "#596582"
                             font.family: root.textFont
-                            font.pixelSize: 8
+                            font.pixelSize: 9
                             horizontalAlignment: Text.AlignRight
                             elide: Text.ElideRight
                         }
