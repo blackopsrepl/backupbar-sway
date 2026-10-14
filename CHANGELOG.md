@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.3.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.2.0...v0.3.0) (2026-10-14)
+
+
+### Features
+
+* **collectors:** report Borg deduplicated repository usage ([2ca0dc5](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/2ca0dc5be97b45d77af628f295792212650262fd))
+* **panel:** contextual dashboard, like-for-like metrics, scroll-safe job list ([ba9fe89](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/ba9fe89322b916b8f47e7c5a7840ee801634fd51))
+* **presenter:** surface next run, repo usage, overdue, like-for-like headline ([ef01366](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/ef01366095210340d04afabcd5c68c61f04a512c))
+
+
+### Bug Fixes
+
+* **panel:** clamp the card to short viewports ([34f968d](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/34f968df8701efe7ff67a03ae0503fa9136b0a65))
+* **panel:** count systems, not jobs, in the like-for-like headline ([284a3e0](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/284a3e0f3c454cd02c6d7ba924c79d9233addc3c))
+* **panel:** keep long text out of the metric value slot ([d50b9a0](http://vigilance:3002/blackopsrepl/backupbar-sway/commit/d50b9a010c8e2838531c2eb642df55a5b5d80612))
+
 ## [0.2.0](http://vigilance:3002/blackopsrepl/backupbar-sway/compare/v0.1.1...v0.2.0) (2026-10-12)
 
 ### Features
