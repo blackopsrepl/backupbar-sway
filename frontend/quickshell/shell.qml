@@ -288,7 +288,7 @@ ShellRoot {
         color: buttonArea.containsMouse ? Qt.rgba(accent.r, accent.g, accent.b, 0.16) : "#121827"
         border.color: buttonArea.containsMouse ? accent : "#2B3550"
         border.width: 1
-         radius: 3
+        radius: 0
 
         RowLayout {
             anchors.centerIn: parent
@@ -326,7 +326,7 @@ ShellRoot {
         color: "#101522"
         border.color: "#253057"
         border.width: 1
-         radius: 3
+        radius: 0
 
         ColumnLayout {
             anchors.fill: parent
@@ -372,14 +372,14 @@ ShellRoot {
         color: "#111725"
         border.color: "#253057"
         border.width: 1
-         radius: 3
+        radius: 0
 
         Rectangle {
             width: 5
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             color: root.statusColor(system.status)
-             radius: 3
+            radius: 0
         }
 
         ColumnLayout {
@@ -456,14 +456,14 @@ ShellRoot {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 5
                 color: "#090C14"
-                 radius: 3
+                radius: 0
                 border.color: "#242D44"
                 border.width: 1
                 Rectangle {
                     width: system.ageSeconds === null || system.ageSeconds === undefined ? 0 : Math.max(4, Math.min(parent.width, parent.width * (1 - Math.min(1, Number(system.ageSeconds) / 172800))))
                     height: parent.height
                     color: root.statusColor(system.status)
-                     radius: 3
+                    radius: 0
                 }
             }
         }
@@ -478,7 +478,7 @@ ShellRoot {
         color: "#101522"
         border.color: "#253057"
         border.width: 1
-         radius: 3
+        radius: 0
 
         ColumnLayout {
             anchors.fill: parent
@@ -506,12 +506,12 @@ ShellRoot {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 4
                 color: "#080B12"
-                 radius: 3
+                radius: 0
                 Rectangle {
                     width: parent.width * root.storageWidth(mount) / 100
                     height: parent.height
                     color: root.statusColor(mount.status)
-                     radius: 3
+                    radius: 0
                 }
             }
         }
@@ -523,7 +523,7 @@ ShellRoot {
     // panelHeight()/panelWidth(), and transparent. There is no scrim and no
     // backdrop catcher — the desktop stays interactive because only this
     // bar-edge strip is covered. Wayland surfaces are opaque to input, so the
-    // gutter strip (window minus card radius) closes the panel; apps never
+    // gutter strip (window minus the card's rect) closes the panel; apps never
     // receive clicks through the card.
     // NOTE (family trade): a bounded surface cannot see clicks on the desktop
     // outside it, so the old "click anywhere outside closes" UX is retired in
@@ -552,7 +552,7 @@ ShellRoot {
             anchors.fill: parent
 
             // Transparent click-catcher filling the bounded gutter strip: any
-            // click inside the window but outside the card's radius dismisses.
+            // click inside the window but outside the card's rect dismisses.
             MouseArea {
                 id: stripCatcher
                 anchors.fill: panelItem
@@ -566,7 +566,7 @@ ShellRoot {
                 width: modalFrame.width
                 height: modalFrame.height
                 color: Qt.rgba(0, 0, 0, 0.55)
-                radius: 10
+                radius: 0
                 visible: modalFrame.visible
             }
 
@@ -581,7 +581,7 @@ ShellRoot {
                 color: "#0A0D16"
                 border.color: root.statusColor(root.effectiveStatus)
                 border.width: 1
-                radius: 10
+                radius: 0
 
                 MouseArea {
                     anchors.fill: parent
@@ -591,7 +591,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 1
-                    radius: 9
+                    radius: 0
                     color: "transparent"
                     border.color: "#27304A"
                     border.width: 1
@@ -622,7 +622,7 @@ ShellRoot {
                             color: "#0E1422"
                             border.color: "#82FB9C"
                             border.width: 1
-                             radius: 3
+                            radius: 0
 
                             Canvas {
                                 id: orbitCanvas
@@ -717,7 +717,7 @@ ShellRoot {
                             color: "#121827"
                             border.color: "#2B3550"
                             border.width: 1
-                             radius: 3
+                            radius: 0
                             Text {
                                 id: jobsChipText
                                 anchors.centerIn: parent
@@ -923,7 +923,7 @@ ShellRoot {
                             color: "#101522"
                             border.color: "#253057"
                             border.width: 1
-                             radius: 3
+                            radius: 0
                             ColumnLayout {
                                 anchors.fill: parent
                                 anchors.margins: 8
