@@ -664,11 +664,14 @@ ShellRoot {
 
                         MetricTile {
                             label: "systems"
-                            // Like-for-like: the same total-systems basis the
-                            // chip uses (N/M healthy), with the overdue count
-                            // alongside it in matching style.
-                            value: summary.headlineText || "0 systems / 0 overdue"
-                            detail: (summary.healthyCount || 0) + " healthy"
+                            // Like-for-like with the chip (BB N/M): the tile
+                            // carries the all-systems count; the overdue share
+                            // lives in the detail line and the full headline
+                            // sentence under the title. A long value in the
+                            // big font clips at the tile border, so prose
+                            // never goes in the value slot.
+                            value: String(summary.systemCount || 0)
+                            detail: (summary.healthyCount || 0) + " healthy · " + (summary.overdueCount || 0) + " overdue"
                             accent: (summary.overdueCount || 0) > 0 || (summary.criticalCount || 0) > 0 ? "#F2C572" : "#82FB9C"
                         }
                         MetricTile {
