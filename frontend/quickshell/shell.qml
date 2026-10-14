@@ -19,11 +19,29 @@ ShellRoot {
     property string unknownIcon: "󰘥"
     property string refreshIcon: "󰑐"
     property string closeIcon: "󰅖"
+    // Bar drop-down geometry. The panel is a Waybar companion chip on the bar
+    // (modules-left, left of center). Waybar and QuickShell are separate
+    // processes, so no anchor item exists; the surface anchors to the top bar
+    // edge and the left screen edge — one horizontal anchor, chip's side —
+    // hung below the bar by panelTopMargin from the surface's top edge to the
+    // card, with a gutter from the left edge for the shadow's bleed. The
+    // surface carries exactly the card plus that gutter — never the screen.
+    // 52 clears the 46px Waybar island (13px font + padding) with a 6px
+    // gap for the drop shadow; bar height is not queryable across the
+    // Waybar/QuickShell process boundary.
+    property int panelTopMargin: 52
+    property int panelMaxWidth: 1120
+    property int panelGutterWidth: 16
+    property int panelMaxHeight: 760
+    property int panelMinHeight: 480
+    property int panelChrome: 16
+    property int panelMinWidth: 372
+
     // Breakpoint pattern shared with the Switchyard panel: fixed margins and
     // font sizes below wide/narrow thresholds, mirroring Switchyard's
     // narrowLayout/shortViewport pair, in BackupBar's vocabulary.
-    property bool narrowWidth: modal.width < 1000
-    property bool shortViewport: modal.height < 700
+    property bool narrowWidth: panel.width < 1000
+    property bool shortViewport: panel.height < 700
     property real nowMilliseconds: Date.now()
     property var viewData: snapshotAdapter.view && snapshotAdapter.view.summary ? snapshotAdapter.view : ({ summary: {}, systems: [], storage: [], timeline: [] })
     property var summary: viewData.summary || ({})
@@ -123,6 +141,32 @@ ShellRoot {
     function reloadState() {
         snapshotFile.reload()
         uiFile.reload()
+    }
+
+    // The drop-down's size, counted from the parts actually laid out — never
+    // from implicit sizes, which collapse on Flickable/ListView panes. Vertical
+    // budget: 160 = 146 BackupCard row + 8 spacing (12 visible rows max), then
+    // 120 of fixed chrome (header band, metric-tile band, list header, PRESSURE
+    // MAP band, OBSERVATION STREAM, the no-touch footer and paddings), + 146
+    // extra for a populated timeline strip. Capped to the true viewport minus
+    // the bar-edge strip (panelTopMargin) and a breathing gap, so on capped
+    // viewports the job list scrolls inside with its own cue instead of
+    // inflating the surface toward the screen edge.
+    function panelHeight() {
+        var rowsHeight = Math.min(root.systems.length, 12) * 160
+        var contentHeight = 120 + rowsHeight + (root.timeline.length > 0 ? 146 : 0)
+        var availableHeight = Math.max(root.panelMinHeight, panel.screen.height - root.panelTopMargin - 12)
+        return Math.max(root.panelMinHeight, Math.min(root.panelMaxHeight, availableHeight, contentHeight))
+    }
+
+    // Width is a fixed surface width: layer-shell margins only inset the
+    // anchored (left/right) edges — they cannot shrink the window — so the
+    // bounded surface is one fixed bar-drop width, anchored at the chip's side
+    // with a gutter for the shadow's bleed, clamped to the viewport with a
+    // floor.
+    function panelWidth() {
+        return Math.min(root.panelMaxWidth + root.panelGutterWidth,
+                        Math.max(root.panelMinWidth, panel.screen.width - 16))
     }
 
     Process {
@@ -473,21 +517,29 @@ ShellRoot {
         }
     }
 
+    // Bounded bar drop-down surface. The PanelWindow is exactly the card's
+    // rect plus the left gutter for the shadow's bleed: anchored to the top
+    // bar edge (and the chip-side left edge), sized by the counted
+    // panelHeight()/panelWidth(), and transparent. There is no scrim and no
+    // backdrop catcher — the desktop stays interactive because only this
+    // bar-edge strip is covered. Wayland surfaces are opaque to input, so the
+    // gutter strip (window minus card radius) closes the panel; apps never
+    // receive clicks through the card.
+    // NOTE (family trade): a bounded surface cannot see clicks on the desktop
+    // outside it, so the old "click anywhere outside closes" UX is retired in
+    // favor of Esc, the Close button, or a click inside the gutter strip.
     PanelWindow {
-        id: modal
+        id: panel
         visible: uiAdapter.open
         screen: Quickshell.screens.length ? Quickshell.screens[0] : null
-        implicitWidth: screen ? screen.width : 1200
-        implicitHeight: screen ? screen.height : 820
+        implicitWidth: panelWidth()
+        implicitHeight: panelHeight()
         color: "transparent"
-        // Mac-bar behavior: no focus grab, no backdrop. The input mask is
-        // bound to the card, so clicks outside it reach the desktop.
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        mask: Region { item: card; intersection: Intersection.Intersect }
         aboveWindows: true
         exclusionMode: ExclusionMode.Ignore
-        anchors { top: true; bottom: true; left: true; right: true }
-        margins { top: 0; bottom: 0; left: 0; right: 0 }
+        anchors { top: true; left: true }
+        margins { top: panelTopMargin; left: 0 }
 
         Shortcut {
             sequence: "Esc"
@@ -496,20 +548,40 @@ ShellRoot {
         }
 
         Item {
+            id: panelItem
             anchors.fill: parent
 
+            // Transparent click-catcher filling the bounded gutter strip: any
+            // click inside the window but outside the card's radius dismisses.
+            MouseArea {
+                id: stripCatcher
+                anchors.fill: panel
+                z: -1
+                onClicked: root.closeModal()
+            }
+
             Rectangle {
-                id: card
-                width: Math.min(1120, Math.max(340, modal.width - 36))
-                // Viewport-fit height: shrink below 820 when the screen is
-                // shorter (Switchyard's clamp) so the frame never crops; the
-                // bounded job list and the outer scroll absorb the difference.
-                height: Math.max(340, Math.min(820, modal.height - 30))
-                anchors.centerIn: parent
+                id: frameShadow
+                anchors.centerIn: panelItem
+                width: modalFrame.width
+                height: modalFrame.height
+                color: Qt.rgba(0, 0, 0, 0.55)
+                radius: 10
+                visible: modalFrame.visible
+            }
+
+            Rectangle {
+                id: modalFrame
+                // The card is inset from the window's left edge: the inset is
+                // the window's own dismissal gutter (clicks there close) and
+                // the shadow's bleed room. Layer surfaces are opaque to input
+                // across their whole rect, so the inset must live inside.
+                anchors.fill: panelItem
+                anchors.leftMargin: root.panelGutterWidth
                 color: "#0A0D16"
                 border.color: root.statusColor(root.effectiveStatus)
                 border.width: 1
-                radius: 4
+                radius: 10
 
                 MouseArea {
                     anchors.fill: parent
@@ -519,7 +591,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 1
-                    radius: 3
+                    radius: 9
                     color: "transparent"
                     border.color: "#27304A"
                     border.width: 1
@@ -528,7 +600,7 @@ ShellRoot {
                 Flickable {
                     id: panelScroll
                     anchors.fill: parent
-                    anchors.margins: 17
+                    anchors.margins: root.panelChrome
                     contentWidth: width
                     contentHeight: panelContent.implicitHeight
                     clip: true
@@ -590,14 +662,28 @@ ShellRoot {
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 2
-                            Text {
-                                Layout.fillWidth: true
-                                text: "BACKUPBAR"
-                                color: "#DDF7FF"
-                                font.family: root.textFont
-                                font.pixelSize: root.shortViewport ? 22 : 24
-                                font.bold: true
-                                elide: Text.ElideRight
+                            Row {
+                                spacing: 8
+                                Text {
+                                    text: "BACKUPBAR"
+                                    color: "#DDF7FF"
+                                    font.family: root.textFont
+                                    font.pixelSize: root.shortViewport ? 22 : 24
+                                    font.bold: true
+                                    elide: Text.ElideRight
+                                }
+                                // Live dot: the panel is a live read-only view;
+                                // the dot carries that at a glance (amber while
+                                // a refresh runs, red on a source-level error).
+                                Rectangle {
+                                    id: liveDot
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 7
+                                    height: 7
+                                    radius: 3.5
+                                    color: root.source.status === "error" ? "#FF6B7A"
+                                        : (actionRunner.running || closeRunner.running) ? "#F2C572" : "#82FB9C"
+                                }
                             }
                             // Like-for-like headline: the chip's job basis with
                             // an explicit overdue count next to it. Presenter-
@@ -750,7 +836,7 @@ ShellRoot {
                             GridLayout {
                                 id: jobsGrid
                                 width: jobsScroll.width
-                                columns: jobsScroll.width >= 860 ? 3 : (jobsScroll.width >= 560 ? 2 : 1)
+                                columns: jobsScroll.width >= 876 ? 3 : (jobsScroll.width >= 576 ? 2 : 1)
                                 columnSpacing: 8
                                 rowSpacing: 8
                                 Repeater {
