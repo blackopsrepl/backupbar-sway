@@ -33,7 +33,7 @@
 
 - Use the existing Hackerman palette and Fira Code.
 - Keep the bar terse; put system detail in QuickShell.
-- The panel must remain centered, bounded, scroll-safe, and usable on narrow screens.
+- The panel must remain a bounded bar drop-down (chip's side, below the bar edge), scroll-safe, and usable on narrow screens; the desktop outside its surface stays interactive.
 - Refresh is observation-only. Do not expose backup execution or destructive repository controls.
 - Presenter output is view-ready; QML should not reproduce source classification rules.
 
