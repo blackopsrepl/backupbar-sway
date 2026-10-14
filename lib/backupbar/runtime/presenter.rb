@@ -3,6 +3,11 @@
 module BackupBar
   module Runtime
     module Presenter
+      # A backup that has not completed within 48 hours has missed at least one
+      # daily cycle even if its timer still reports an active schedule; that is
+      # the same threshold the collectors use to downgrade a backup to warning.
+      BACKUP_OVERDUE_SECONDS = 172_800
+
       STATUS_ORDER = {
         "critical" => 0,
         "warning" => 1,
@@ -15,41 +20,70 @@ module BackupBar
 
       def apply(raw, config, now: Time.now)
         systems = Array(raw[:systems]).map { |system| present_system(system, now) }
+        ordered = systems.sort_by { |system| [STATUS_ORDER.fetch(system[:status], 9), system[:label].to_s] }
         storage = Array(raw[:storage])
         summary = build_summary(systems, storage, now)
         status = overall_status(systems, storage)
         timeline = Array(raw[:timeline]).map { |event| present_event(event, now) }
         source = raw[:source] || {}
         chip = chip_view(summary, status)
+        view = {
+          chip: chip,
+          summary: summary,
+          systems: ordered,
+          storage: storage,
+          timeline: timeline,
+          staleAfterSeconds: config.dig(:display, :staleAfterSeconds).to_i,
+          source: source,
+          context: context_view(ordered, now)
+        }
 
         {
           snapshotVersion: Runtime::State::SNAPSHOT_VERSION,
           generatedAt: Core::Format.iso_time(now),
           status: status,
           source: source,
-          systems: systems.sort_by { |system| [STATUS_ORDER.fetch(system[:status], 9), system[:label].to_s] },
+          systems: ordered,
           storage: storage,
           timeline: timeline,
           summary: summary,
-          view: {
-            chip: chip,
-            summary: summary,
-            systems: systems.sort_by { |system| [STATUS_ORDER.fetch(system[:status], 9), system[:label].to_s] },
-            storage: storage,
-            timeline: timeline,
-            staleAfterSeconds: config.dig(:display, :staleAfterSeconds).to_i,
-            source: source
-          }
+          view: view
         }
       end
 
       def present_system(system, now)
+        next_at = Core::Format.parse_time(system[:nextAt])
+        latest_age = Core::Format.age_seconds(system[:latestAt], now)
+        latest_age = nil if latest_age&.negative?
         system.merge(
-          ageSeconds: Core::Format.age_seconds(system[:latestAt], now),
+          ageSeconds: latest_age,
           latestText: system[:latestAt] ? Core::Format.relative_time(system[:latestAt], now) : system[:latestText].to_s,
           statusLabel: system[:status].to_s.tr("-", " ").upcase,
-          statusRank: STATUS_ORDER.fetch(system[:status].to_s, 9)
+          statusRank: STATUS_ORDER.fetch(system[:status].to_s, 9),
+          nextAtText: next_at ? "in #{Core::Format.duration([(next_at - now).ceil, 0].max)}" : nil,
+          overdue: overdue?(system, latest_age, next_at, now),
+          repoUsageText: repo_usage_text(system)
         )
+      end
+
+      # "Overdue" is a surfacing judgment only: the next scheduled run is already
+      # in the past, or a backup has not completed within its expected window.
+      # No scheduler or corrective action is implied anywhere downstream.
+      def overdue?(system, latest_age, next_at, now)
+        return next_at < now if next_at
+
+        return false unless system[:kind] == "backup"
+        return false unless latest_age
+
+        latest_age > BACKUP_OVERDUE_SECONDS
+      end
+
+      # Repository footprint as the source already reports it (Borg's
+      # deduplicated total). Presentation-only: nothing here queries a tool.
+      def repo_usage_text(system)
+        metrics = system[:metrics].is_a?(Hash) ? system[:metrics] : {}
+        text = metrics[:repoUsageText].to_s.strip
+        text.empty? ? nil : text
       end
 
       def present_event(event, now)
@@ -64,13 +98,14 @@ module BackupBar
         attention = systems.count { |system| %w[critical warning unknown].include?(system[:status]) }
         latest = backups.filter_map { |system| Core::Format.parse_time(system[:latestAt]) }.max
         max_mount = storage.compact.max_by { |mount| mount[:usePercent].to_f }
-        {
+        summary = {
           systemCount: systems.length,
           backupCount: backups.length,
           healthyCount: systems.count { |system| system[:status] == "healthy" },
           activeCount: systems.count { |system| system[:status] == "active" },
           attentionCount: attention,
           criticalCount: systems.count { |system| system[:status] == "critical" },
+          overdueCount: systems.count { |system| system[:overdue] },
           latestGoodAt: Core::Format.iso_time(latest),
           latestGoodText: latest ? Core::Format.relative_time(latest, now) : "no successful backup observed",
           storageWarningCount: storage.count { |mount| %w[critical warning].include?(mount[:status]) },
@@ -78,6 +113,37 @@ module BackupBar
           hottestPercent: max_mount && max_mount[:usePercent],
           generatedText: "refreshed #{Core::Format.relative_time(now, now)}"
         }
+        summary[:headlineText] = headline_text(summary)
+        summary
+      end
+
+      # One like-for-like headline: the same number-of-jobs basis the chip uses,
+      # with an explicit overdue count next to it in the same plural style.
+      def headline_text(summary)
+        jobs = summary[:backupCount].to_i
+        overdue = summary[:overdueCount].to_i
+        "#{jobs} #{jobs == 1 ? "job" : "jobs"} / #{overdue} overdue"
+      end
+
+      def context_view(systems, now)
+        upcoming = systems.filter_map do |system|
+          next_at = Core::Format.parse_time(system[:nextAt])
+          next_at && next_at >= now ? [next_at, system[:label].to_s] : nil
+        end.min_by { |entry| entry[0] }
+
+        if upcoming
+          {
+            nextRunAt: Core::Format.iso_time(upcoming[0]),
+            nextRunLabel: upcoming[1],
+            nextRunText: "in #{Core::Format.duration([(upcoming[0] - now).ceil, 0].max)}"
+          }
+        else
+          {
+            nextRunAt: nil,
+            nextRunLabel: nil,
+            nextRunText: nil
+          }
+        end
       end
 
       def overall_status(systems, storage)
